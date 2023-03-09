@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom'
 
 const navigation = [
   { name: 'Home', href: '/', current: true },
-  { name: 'Team', href: '/team', current: false },
+  { name: 'Add category', href: '/add-category', current: false },
   { name: 'Projects', href: '/projects', current: false },
   { name: 'Calendar', href: '/calendar', current: false },
 ]
@@ -13,7 +13,6 @@ const navigation = [
 function classNames(...classes : any) {
   return classes.filter(Boolean).join(' ')
 }
-
 
 const Navbar = () => {
   return (
@@ -52,11 +51,9 @@ const Navbar = () => {
                       <Link 
                         key={item.name}
                         to={item.href}
-                        className={classNames(
-                          item.current ? 'bg-gray-900 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white',
-                          'px-3 py-2 rounded-md text-sm font-medium'
-                        )}  
-                        aria-current={item.current ? 'page' : undefined}  
+                        className="text-gray-300 hover:bg-gray-700 hover:text-white
+                          px-3 py-2 rounded-md text-sm font-medium"
+                        aria-current={item.current ? 'page' : undefined} 
                         >
                           {item.name}
                       </Link>
@@ -139,10 +136,7 @@ const Navbar = () => {
                   key={item.name}
                   as="a"
                   href={item.href}
-                  className={classNames(
-                    item.current ? 'bg-gray-900 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white',
-                    'block px-3 py-2 rounded-md text-base font-medium'
-                  )}
+                  className='text-gray-300 hover:bg-gray-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium'
                   aria-current={item.current ? 'page' : undefined}
                 >
                   {item.name}

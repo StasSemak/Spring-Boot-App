@@ -6,4 +6,5 @@ import shop.entities.CategoryEntity;
 
 @Repository
 public interface CategoryRepository extends JpaRepository<CategoryEntity, Integer> {
+    Long deleteById(int id);
 }
