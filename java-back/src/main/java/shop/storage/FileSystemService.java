@@ -3,9 +3,12 @@ package shop.storage;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
-import java.io.FileOutputStream;
-import java.io.IOException;
+import javax.imageio.ImageIO;
+import javax.swing.*;
+import java.awt.image.BufferedImage;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -49,25 +52,82 @@ public class FileSystemService implements StorageService {
         try {
             if(base64.isEmpty())
                 throw new StorageException("Empty base64!");
-            String randomFileName = UUID.randomUUID() + ".jpg";
-            byte[] bytes = Base64.getDecoder().decode(base64.split(",")[1]);
-            new FileOutputStream(rootLocation.toString() + "/" + randomFileName).write(bytes);
+            String[] charArray = base64.split(",");
+            String extension;
+            if (charArray[0].equals("data:image/png;base64")) {
+                extension = "png";
+            }
+            else {
+                extension = "jpg";
+            }
+            String randomFileName = UUID.randomUUID() + "." + extension;
+            byte[] bytes = Base64.getDecoder().decode(charArray[1]);
+            int[] imageSize= { 32, 150, 300, 600, 1200 };
+            try(var byteStream = new ByteArrayInputStream(bytes)) {
+                var image = ImageIO.read(byteStream);
+                for(int size : imageSize) {
+                    BufferedImage img = ImageUtils.resizeImage(image,
+                            extension == "jpg" ? ImageUtils.IMAGE_JPEG : ImageUtils.IMAGE_PNG, size, size);
+                    ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+                    ImageIO.write(img, extension, byteArrayOutputStream);
+                    byte[] newBytes = byteArrayOutputStream.toByteArray();
+                    FileOutputStream out = new FileOutputStream(rootLocation.toString() + "/" + size + "_" + randomFileName);
+                    out.write(newBytes);
+                    out.close();
+                }
+            }
+            catch (IOException ex) {
+                throw new StorageException("Error refactoring image!", ex);
+            }
             return randomFileName;
         }
-        catch (IOException ex) {
+        catch (StorageException ex) {
             throw new StorageException("Error while saving base64!", ex);
         }
     }
 
     @Override
     public void delete(String fileName) {
-        String rootPath = rootLocation.toString();
-        Path filePath = Paths.get(rootPath + "/" + fileName);
+        int[] imageSize = { 32, 150, 300, 600, 1200 };
         try {
-            Files.delete(filePath);
+            for (int size : imageSize) {
+                Path filePath = rootLocation.resolve(size + "_" + fileName);
+                File file = new File(filePath.toString());
+                if(!file.delete()) {
+                    throw new Exception();
+                }
+            }
         }
-        catch(IOException ex) {
+        catch(Exception ex) {
             throw new StorageException("Error deleting a file!", ex);
+        }
+    }
+
+    @Override
+    public String saveMultipartFile(MultipartFile file) {
+        try {
+            String randomFileName = UUID.randomUUID() + ".jpg";
+            byte[] bytes = file.getBytes();
+            int[] imageSize= { 32, 150, 300, 600, 1200 };
+            try(var byteStream = new ByteArrayInputStream(bytes)) {
+                var image = ImageIO.read(byteStream);
+                for(int size : imageSize) {
+                    BufferedImage img = ImageUtils.resizeImage(image, ImageUtils.IMAGE_JPEG, size, size);
+                    ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+                    ImageIO.write(img, "jpg", byteArrayOutputStream);
+                    byte[] newBytes = byteArrayOutputStream.toByteArray();
+                    FileOutputStream out = new FileOutputStream(rootLocation.toString() + "/" + size + "_" + randomFileName);
+                    out.write(newBytes);
+                    out.close();
+                }
+            }
+            catch (IOException ex) {
+                throw new StorageException("Error refactoring image!", ex);
+            }
+            return randomFileName;
+        }
+        catch (Exception ex) {
+            throw new StorageException("Error while saving base64!", ex);
         }
     }
 }

@@ -2,15 +2,11 @@ package shop.controllers;
 
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import shop.dto.category.CategoryCreateDTO;
-import shop.dto.category.CategoryDeleteDTO;
-import shop.dto.category.CategoryResponseDTO;
-import shop.dto.category.CategoryUpdateDTO;
-import shop.entities.CategoryEntity;
-import shop.repositories.CategoryRepository;
-import shop.storage.StorageService;
+import shop.dto.category.*;
+import shop.interfaces.ICategoryService;
 
 import java.util.List;
 
@@ -18,40 +14,33 @@ import java.util.List;
 @AllArgsConstructor
 @RequestMapping("api/categories")
 public class CategoryController {
-    private final CategoryRepository categoryRepository;
-    private final StorageService storageService;
+    private final ICategoryService categoryService;
 
     @GetMapping
-    public ResponseEntity<List<CategoryEntity>> index() {
-        var list = categoryRepository.findAll();
-        return new ResponseEntity<>(list, HttpStatus.OK);
+    public ResponseEntity<List<CategoryItemDTO>> index() {
+        return new ResponseEntity<>(categoryService.get(), HttpStatus.OK);
     }
 
-    @PostMapping
-    public ResponseEntity<CategoryEntity> create(@RequestBody CategoryCreateDTO dto) {
-        CategoryEntity category = new CategoryEntity();
-        category.setName(dto.getName());
-        category.setImagePath(dto.getImagePath());
-        categoryRepository.save(category);
-        return new ResponseEntity<>(category, HttpStatus.CREATED);
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<CategoryItemDTO> create(@ModelAttribute CategoryCreateDTO model) {
+        return new ResponseEntity<>(categoryService.create(model), HttpStatus.CREATED);
+    }
+
+    @GetMapping("{id}")
+    public ResponseEntity<CategoryItemDTO> get(@PathVariable int id) {
+        var result = categoryService.get(id);
+        return new ResponseEntity<>(result, result == null ? HttpStatus.NOT_FOUND : HttpStatus.OK);
+    }
+
+    @PutMapping("{id}")
+    public ResponseEntity<CategoryItemDTO> update(@PathVariable int id, @RequestBody CategoryUpdateDTO model) {
+        var result = categoryService.update(id, model);
+        return new ResponseEntity<>(result, result == null ? HttpStatus.NOT_FOUND : HttpStatus.OK);
     }
 
     @DeleteMapping("{id}")
-    public ResponseEntity<Long> delete(@PathVariable int id) {
-        //String imagePath = categoryRepository.findById(id).get().getImagePath();
-        //storageService.delete(imagePath);
-        Long res = categoryRepository.deleteById(id);
-        return new ResponseEntity<>(res, HttpStatus.OK);
-    }
-
-    @PutMapping
-    public ResponseEntity<CategoryEntity> update(@RequestBody CategoryUpdateDTO dto) {
-        var category_optional = categoryRepository.findById(dto.getId());
-        if(category_optional.isEmpty()) return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
-        CategoryEntity category = category_optional.get();
-        category.setImagePath(dto.getImagePath());
-        category.setName(dto.getName());
-        categoryRepository.save(category);
-        return new ResponseEntity<>(category, HttpStatus.OK);
+    public ResponseEntity<String> delete(@PathVariable int id) {
+        categoryService.delete(id);
+        return new ResponseEntity<>("Category is deleted", HttpStatus.OK);
     }
 }

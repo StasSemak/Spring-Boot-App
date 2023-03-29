@@ -5,8 +5,8 @@ import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import shop.dto.ImageUploadDTO;
-import shop.repositories.CategoryRepository;
 import shop.storage.StorageService;
 
 @RestController
@@ -25,7 +25,11 @@ public class HomeController {
 
     @PostMapping("/upload")
     public String upload(@RequestBody ImageUploadDTO dto) {
-        String fileName = storageService.save(dto.getBase64());
-        return fileName;
+        return storageService.save(dto.getBase64());
+    }
+
+    @PostMapping(value = "./form/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public String formUpload(@RequestParam("file") MultipartFile file) {
+        return storageService.saveMultipartFile(file);
     }
 }

@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { useSelector } from "react-redux";
 import { useDispatch } from "react-redux";
 import { Link } from "react-router-dom";
+import { APP_ENV } from "../../env";
 import http from "../../http";
 import { CategoryActionType, ICategoryItem } from "./types";
 
@@ -19,10 +20,10 @@ const Home = () => {
         .catch(err => {
           console.log(err);
         })
-  }, [])
+  }, [dispatch])
 
   const getCategoryImage = (name: string) => {
-    return `http://localhost:8080/files/${name}`;
+    return `${APP_ENV.REMOTE_HOST_NAME}files/1200_${name}`;
   }
 
   return (

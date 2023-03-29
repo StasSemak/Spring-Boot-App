@@ -1,15 +1,15 @@
 import { useState } from "react";
 import { useSelector } from "react-redux";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useFilePicker } from "use-file-picker";
+import { APP_ENV } from "../../env";
 import http from "../../http";
 import { ICategoryItem } from "../home/types";
 
 const EditCategory = () => {
 
   const navigate = useNavigate();
-  const [queryParams] = useSearchParams();
-  const id = queryParams.get("id");
+  const {id} = useParams();
 
   const category = useSelector((store : any) => store.categories as ICategoryItem[])
     .find((cat) => cat.id.toString() === id);
@@ -24,7 +24,7 @@ const EditCategory = () => {
   }
 
   const getCategoryImage = () => {
-    return `http://localhost:8080/files/${category?.imagePath}`;
+    return `${APP_ENV.REMOTE_HOST_NAME}files/300_${category?.imagePath}`;
   }
 
   const [openFileSelector, { filesContent, errors, clear }] = useFilePicker({
@@ -60,31 +60,15 @@ const EditCategory = () => {
   ));
 
   const submitHandler = () => {
-    if(isNewImage) {
-      http.post("upload", { base64: filesContent[0].content })
-          .then(res => {
-            console.log(res);
-            http.put("/api/categories", {id:id, name:name, imagePath: res.data})
-                .then(res => {
-                  console.log(res);
-                  navigate("/");
-                })
-                .catch(err => {
-                  console.log(err);
-                })
-          })
-    }
-    else {
-      http.put("/api/categories", {id:id, name:name, imagePath: category?.imagePath})
-          .then(res => {
-            console.log(res);
-            navigate("/");
-          })
-          .catch(err => {
-            console.log(err);
-          })
-    }
-  }
+    http.put(`/api/categories/${id}`, { name: name })
+        .then(res => {
+          console.log(res);
+          navigate("/");
+        })
+        .catch(err => {
+          console.log(err);
+        })
+  } 
 
   return(
     <>
@@ -133,7 +117,7 @@ const EditCategory = () => {
                   }
                   
 
-                  {isNewImage && filesContent.length == 0 ? 
+                  {isNewImage && filesContent.length === 0 ? 
                     <button className="bg-gray-800 rounded-md p-2 hover:bg-gray-700 transition-all" 
                       onClick={openFileSelector} type="button">
                       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6 text-white">

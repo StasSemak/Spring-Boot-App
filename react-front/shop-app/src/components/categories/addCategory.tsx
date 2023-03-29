@@ -3,14 +3,9 @@ import { useNavigate } from "react-router-dom";
 import { useFilePicker } from "use-file-picker";
 import http from "../../http";
 
-interface CategoryItem {
-  name: string;
-  imagePath: string;
-}
-
 const AddCategory = () => {
   
-  const [openFileSelector, { filesContent, errors, clear }] = useFilePicker({
+  const [openFileSelector, { filesContent, errors, plainFiles, clear }] = useFilePicker({
     readAs: 'DataURL',
     accept: 'image/*',
     multiple: false
@@ -47,39 +42,26 @@ const AddCategory = () => {
   const submitHandler = (e: any) => {
     e.preventDefault();
     if(name === '') {
-      e.preventDefault();
       alert("Category name can not be empty!");
       return;
     }
     if(filesContent.length === 0) {
-      e.preventDefault();
       alert("At least one image is required!");
       return;
     }
 
-    http.post("/upload", { base64: filesContent[0].content })
+    const data = new FormData();
+    data.append('name', name);
+    data.append('file', plainFiles[0]);
+
+    http.post("/api/categories", data)
           .then(res => {
             console.log(res);
-            postCategory(res.data);
+            navigate("/");
           })
           .catch(err => {
             console.log(err);
           })
-  }
-
-  const postCategory = (path: string) => {
-    let category: CategoryItem = {
-      name: name,
-      imagePath: path
-    }
-    http.post("/api/categories", category)
-        .then(res => {
-          console.log(res);
-          navigate("/");
-        })
-        .catch(err => {
-          console.log(err);
-        })
   }
 
   return(
